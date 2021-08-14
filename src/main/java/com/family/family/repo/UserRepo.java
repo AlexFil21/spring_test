@@ -8,10 +8,10 @@ import java.util.List;
 
 @Repository
 public interface UserRepo extends CrudRepository<User, Long> {
-    List<User> findAll();
 
     @Query(value = "SELECT * FROM USER", nativeQuery = true)
     List<User> findAllUsers();
 
-
+    @Query("select u from User u where u.age>:min and u.age<:max")
+    List<User> filterByAge(int min, int max);
 }

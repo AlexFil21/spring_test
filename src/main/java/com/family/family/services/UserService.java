@@ -5,10 +5,8 @@ import com.family.family.model.User;
 import com.family.family.repo.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -17,42 +15,48 @@ public class UserService {
     UserRepo userRepo;
 
     public List<UserDTO> users(){
-        return convertToDTO(userRepo.findAllUsers());
-    }
-
-    public void addUser(UserDTO userDTO) {
-        User newUser = new User(userDTO.getFirstName(), userDTO.getLastName(), userDTO.getEmail(), userDTO.getAge());
-        userRepo.save(newUser);
+        return userRepo.findAllUsers().stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     public void delete(Long id){
         userRepo.deleteById(id);
     }
 
-    public void update(Long id, UserDTO userDTO){
-        userRepo.save(convertToUser(userDTO, id));
+    public UserDTO addOrUpdate(UserDTO userDTO){
+        return convertToDTO(findById(save(convertToUser(userDTO))));
     }
 
-    public List<UserDTO> convertToDTO(List<User> list){
-        List<UserDTO> userDTO = new ArrayList<>();
-        list.stream().forEach(x -> {
-            userDTO.add(new UserDTO(x.getId(), x.getFirstName(), x.getLastName(), x.getEmail(), x.getAge()));
-        });
-
-        return userDTO;
+    public Long save(User user){
+        userRepo.save(user);
+        return user.getId();
     }
 
-    public User convertToUser(UserDTO userDTO, Long id){
-        Optional<User> findUserById =  userRepo.findById(id);
-        User user = new User();
+    public User findById(Long id){
+        return userRepo.findById(id).orElseThrow(()->new RuntimeException());
+    }
+
+    public List<UserDTO> filter(Integer a, Integer b){
+        return userRepo.filterByAge(a, b).stream().map(this::convertToDTO).collect(Collectors.toList());
+    }
+
+    public UserDTO convertToDTO(User user){
+        return new UserDTO(user.getId(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getAge());
+    }
+
+    public User convertToUser(UserDTO userDTO){
+        User user = null;
         
-        if (findUserById.isPresent()){
-            user.setId(id);
-            user.setEmail(userDTO.getEmail());
-            user.setLastName(userDTO.getLastName());
-            user.setFirstName(userDTO.getFirstName());
-            user.setAge(userDTO.getAge());
+        if (userDTO.getId() == null){
+            user = new User();
+        } else {
+            user = findById(userDTO.getId());
         }
+
+        user.setEmail(userDTO.getEmail());
+        user.setLastName(userDTO.getLastName());
+        user.setFirstName(userDTO.getFirstName());
+        user.setAge(userDTO.getAge());
         return user;
     }
+
 }

@@ -1,5 +1,9 @@
 package com.family.family.dto;
 
+import com.family.family.model.User;
+
+import java.util.List;
+
 public class UserDTO {
     private Long id;
 
