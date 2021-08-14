@@ -1,13 +1,12 @@
 package com.family.family.controllers;
 
 import com.family.family.dto.UserDTO;
-import com.family.family.model.User;
-import com.family.family.container.UserContainer;
-import com.family.family.repo.UserRepo;
 import com.family.family.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -17,40 +16,34 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    UserRepo userRepo;
-
     @GetMapping(value = "/users")
-    public List<UserDTO> users(){
+    public ResponseEntity<List<UserDTO>> getFamilyMembers(){
         List<UserDTO> users = userService.users();
-        return users;
-    }
-
-    @PostMapping(value = "/user")
-    @ResponseStatus(HttpStatus.OK)
-    public void add(@RequestBody UserDTO userDTO){
-        userService.addUser(userDTO);
+        return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
     @DeleteMapping(value = "/user/{id}")
-    public void delete (@PathVariable Long id){
+    public ResponseEntity<Void> deleteFamilyMember(@PathVariable Long id){
         userService.delete(id);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 
-    @PutMapping(value = "/user/update/{id}")
-    public void update(@PathVariable Long id, @RequestBody UserDTO userDTO) {
-        userService.update(id, userDTO);
+    @PostMapping(value = "/user")
+    public ResponseEntity<UserDTO> addFamilyMember(@RequestBody UserDTO userDTO) {
+        UserDTO dto = userService.addOrUpdate(userDTO);
+        return new ResponseEntity<>(dto, HttpStatus.CREATED);
     }
 
-    @GetMapping(value = "/filter")
-    public UserContainer filterByAge(@RequestParam Integer a, @RequestParam Integer b){
-        List<User> list = userRepo.findAll();
+    @PutMapping(value = "/user")
+    public ResponseEntity<UserDTO>  updateFamilyMember(@RequestBody UserDTO userDTO) {
+        UserDTO dto = userService.addOrUpdate(userDTO);
+        return new ResponseEntity<>(dto, HttpStatus.OK);
+    }
 
-        list.stream().filter(x -> x.getAge() > a && x.getAge() < b);
 
-        UserContainer userListContainer = new UserContainer();
-        userListContainer.setList(list);
-
-        return  userListContainer;
+    @GetMapping("/filter")
+    public ResponseEntity<List<UserDTO>> filterFamilyMember(@RequestParam Integer a, @RequestParam Integer b){
+        List<UserDTO> filter = userService.filter(a,b);
+        return new ResponseEntity<>(filter, HttpStatus.OK);
     }
 }
